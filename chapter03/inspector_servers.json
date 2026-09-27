@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "calculator": {
+      "command": "uv",
+      "args": ["--directory", "/home/kei/MCP_Learning/chapter03", "run", "calculator_server.py"]
+    },
+    "greeter": {
+      "command": "uv",
+      "args": ["--directory", "/home/kei/MCP_Learning/chapter03", "run", "greeting_server.py"]
+    }
+  }
+}

@@ -1,0 +1,9 @@
+# .env ファイル（プロジェクトフォルダに作成）
+
+# OpenWeatherMap API（天気情報）
+OPENWEATHER_API_KEY=your_openweather_api_key_here
+
+# NewsAPI（ニュース情報）
+NEWS_API_KEY=your_news_api_key_here
+
+# 注意：IP位置情報APIは登録不要のため不要

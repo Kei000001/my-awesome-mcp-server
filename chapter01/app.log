@@ -1,0 +1,6 @@
+[2024-01-20 10:00:00] INFO: Application started
+[2024-01-20 10:00:05] ERROR: FileNotFoundException: config.ini not found
+[2024-01-20 10:00:10] INFO: Retrying...
+[2024-01-20 10:00:15] ERROR: FileNotFoundException: config.ini not found
+[2024-01-20 10:00:20] ERROR: DatabaseException: Connection timeout
+[2024-01-20 10:00:25] INFO: Application terminated
