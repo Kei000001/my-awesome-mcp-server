@@ -133,7 +133,43 @@ which uv    # 例: /home/yourname/.local/bin/uv
 
 ### 3. 設定を書く
 
-**Claude Desktop を完全に終了してから**、`mcpServers` に次を追加します。`/home/yourname/` の部分は、自分のホームフォルダに置き換えてください。
+登録のしかたは2通りあります。**どちらか一方**を選んでください。両方を登録すると、同じツールが2つずつ見えて、AI がどちらを使うか迷います。
+
+| 方法 | 登録するサーバーの数 | 向いている場面 |
+|---|---|---|
+| **A. 統合サーバー（おすすめ）** | 1つ | 全部のツールをまとめて使いたい |
+| B. サーバーを個別に登録 | 4つ | 必要なサーバーだけ使いたい、章ごとに動きを確かめたい |
+
+どちらの場合も、**Claude Desktop を完全に終了してから**、`mcpServers` に追加します。`/home/yourname/` の部分は、自分のホームフォルダに置き換えてください。
+
+#### A. 統合サーバーを1つ登録する（おすすめ）
+
+`my-awesome-mcp-server` コマンド（`src/mcp_learning/server.py` の `main()`）が、4つのサーバーを1つにまとめて起動します。
+
+```json
+{
+  "mcpServers": {
+    "my-awesome-mcp-server": {
+      "command": "/home/yourname/.local/bin/uv",
+      "args": ["--directory", "/home/yourname/my-awesome-mcp-server", "run", "my-awesome-mcp-server"]
+    }
+  }
+}
+```
+
+- `--directory` には、章のフォルダではなく、**リポジトリの直下**（`pyproject.toml` がある場所）を指定します。
+- ツール名の前に、どのサーバーのツールかを表す名前が付きます（例：`add` → `calculator_add`、`get_weather` → `external_api_get_weather`）。
+- 一部のサーバーだけを使いたいときは、`args` の最後に `--only` を付けます。
+  ```json
+  "args": ["--directory", "/home/yourname/my-awesome-mcp-server", "run", "my-awesome-mcp-server", "--only", "calculator", "database"]
+  ```
+- 登録する前に、ターミナルで起動できるか確認しておくと安心です。
+  ```bash
+  cd ~/my-awesome-mcp-server
+  uv run my-awesome-mcp-server --help    # 使い方が表示されれば OK
+  ```
+
+#### B. サーバーを個別に登録する
 
 ```json
 {
@@ -171,12 +207,14 @@ which uv    # 例: /home/yourname/.local/bin/uv
 ### 4. 起動して確認する
 
 1. Claude Desktop を起動します。
-2. **設定 → 開発者** で、4つのサーバーが **running** になっているか確認します。
-3. チャットで「12×34 は？」と聞いて、`multiply` が使われれば成功です。
+2. **設定 → 開発者** で、登録したサーバーが **running** になっているか確認します（A なら1つ、B なら4つ）。
+3. チャットで「12×34 は？」と聞いて、掛け算のツール（A なら `calculator_multiply`、B なら `multiply`）が使われれば成功です。
 
 ---
 
 ## 利用可能なツール
+
+以下は、サーバーを個別に登録したとき（方法 B）の名前です。統合サーバー（方法 A）では、名前の前に `calculator_`・`database_`・`external_api_`・`universal_` が付きます。
 
 ### `calculator`（`chapter03/calculator_server.py`）
 
@@ -250,6 +288,8 @@ npx @modelcontextprotocol/inspector uv run calculator_server.py
 | 天気・ニュース・検索が認証エラーになる | `.env` のキーを確認（`your_..._here` のままになっていないか） |
 | 自作クライアントで `ping` が `Method not found` | FastMCP 4 と `mcp` 2.x の組み合わせでは `ping()` が使えない。`list_tools()` で代用 |
 | `.env` が見つからない | `.env` はリポジトリの直下に置く。`ls -a` で存在を確認 |
+| 統合サーバーで一部のツールが出ない | stderr に `[エラー] <サーバー名>` と出ていないか確認（Claude Desktop なら `~/.config/Claude/logs/mcp-server-my-awesome-mcp-server.log`）。1つのサーバーが失敗しても、ほかのサーバーは使える |
+| 同じツールが2つずつ見える | 統合サーバー（A）と個別のサーバー（B）を両方登録している。どちらか一方だけにする |
 
 ---
 
@@ -265,6 +305,9 @@ my-awesome-mcp-server/
 ├── chapter08/   # 汎用ツールサーバー（Web 検索・Python 実行）
 ├── chapter09/   # 自作の MCP クライアント（CLI・対話型・OpenAI 連携）
 ├── chapter10/   # MCP エージェント（専用の pyproject.toml あり）
+├── src/
+│   └── mcp_learning/
+│       └── server.py   # 統合サーバー（my-awesome-mcp-server コマンドの本体）
 ├── pyproject.toml
 ├── uv.lock
 ├── LICENSE
@@ -325,6 +368,4 @@ my-awesome-mcp-server/
 
 ## ライセンス
 
-[MIT License](LICENSE)
-
-Copyright (c) 2026 yourname
+このプロジェクトは **MIT License** のもとで公開しています。全文は [LICENSE](LICENSE) を参照してください。
