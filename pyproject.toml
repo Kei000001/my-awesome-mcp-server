@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [project.scripts]
-my-awesome-mcp-server = "mcp_learning:main"
+my-awesome-mcp-server = "mcp_learning.server:main"
 
 [tool.uv.build-backend]
 module-name = "mcp_learning"
