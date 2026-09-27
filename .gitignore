@@ -19,3 +19,6 @@ wheels/
 
 # エージェントの実行状態（chapter10）
 .mcp_agent/
+
+# Claude アプリが自動で置く出力ファイル
+Claude outputs/
