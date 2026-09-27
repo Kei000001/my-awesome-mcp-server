@@ -2,46 +2,39 @@
 """
 My Awesome MCP Server - 統合サーバー
 
-各章で作った4つのMCPサーバーを、FastMCPの mount で1つにまとめて起動する。
-Claude Desktop には、このサーバーを1つ登録するだけで全ツールが使える。
+4つのMCPサーバーを、FastMCPの mount で1つにまとめて起動する。
+Claude Desktop や GitHub Copilot には、このサーバーを1つ登録するだけで全ツールが使える。
 
-  calculator      ← chapter03/calculator_server.py
-  database        ← chapter06/database_server_prompt.py
-  external_api    ← chapter07/external_api_server.py
-  universal       ← chapter08/universal_tools_server.py
+  calculator      ← mcp_learning/servers/calculator.py   （chapter03）
+  database        ← mcp_learning/servers/database.py     （chapter06）
+  external_api    ← mcp_learning/servers/external_api.py （chapter07）
+  universal       ← mcp_learning/servers/universal.py    （chapter08）
 
 ツール名には、どのサーバーのツールかが分かるように名前空間が付く。
 （例：calculator の add → calculator_add）
 
 使い方:
-    uv run my-awesome-mcp-server                          # stdio（Claude Desktop 用）
-    uv run my-awesome-mcp-server --transport http --port 8000
-    uv run my-awesome-mcp-server --only calculator database
+    uv run my-awesome-mcp-server                                  # リポジトリをクローンした場合
+    uvx --from git+https://github.com/Kei000001/my-awesome-mcp-server my-awesome-mcp-server
+    my-awesome-mcp-server --transport http --port 8000
+    my-awesome-mcp-server --only calculator database
 """
 
 from __future__ import annotations
 
 import argparse
-import importlib.util
-import os
+import importlib
 import sys
-from pathlib import Path
-from types import ModuleType
 
+from dotenv import find_dotenv, load_dotenv
 from fastmcp import FastMCP
 
-# リポジトリのルート（src/mcp_learning/server.py から2つ上）
-# 環境変数 MCP_LEARNING_ROOT で上書きできる
-REPO_ROOT = Path(
-    os.environ.get("MCP_LEARNING_ROOT", Path(__file__).resolve().parents[2])
-).resolve()
-
-# 名前空間 → サーバーファイル（リポジトリのルートからの相対パス）
+# 名前空間 → パッケージ内のモジュール
 SERVERS: dict[str, str] = {
-    "calculator": "chapter03/calculator_server.py",
-    "database": "chapter06/database_server_prompt.py",
-    "external_api": "chapter07/external_api_server.py",
-    "universal": "chapter08/universal_tools_server.py",
+    "calculator": "mcp_learning.servers.calculator",
+    "database": "mcp_learning.servers.database",
+    "external_api": "mcp_learning.servers.external_api",
+    "universal": "mcp_learning.servers.universal",
 }
 
 
@@ -50,33 +43,31 @@ def log(message: str) -> None:
     print(message, file=sys.stderr, flush=True)
 
 
-def load_module(name: str, path: Path) -> ModuleType:
-    """ファイルのパスを指定してPythonモジュールとして読み込む"""
-    spec = importlib.util.spec_from_file_location(f"mams_{name}", path)
-    if spec is None or spec.loader is None:
-        raise ImportError(f"読み込めません: {path}")
-    module = importlib.util.module_from_spec(spec)
-    sys.modules[spec.name] = module
-    spec.loader.exec_module(module)
-    return module
+def load_env() -> None:
+    """APIキーを読み込む。
+
+    1. MCPの設定（env）などで渡された環境変数（最優先。上書きしない）
+    2. 起動したフォルダ（またはその上のフォルダ）にある .env
+    uvx で起動するとパッケージはキャッシュに置かれるので、
+    「起動したフォルダから探す」（usecwd=True）ようにしている。
+    """
+    path = find_dotenv(usecwd=True)
+    if path:
+        load_dotenv(path, override=False)
+        log(f"[設定] .env を読み込みました: {path}")
 
 
 def build_server(only: list[str] | None = None) -> FastMCP:
-    """各章のサーバーを読み込み、1つのサーバーにまとめる"""
+    """各サーバーを読み込み、1つのサーバーにまとめる"""
     main_server = FastMCP("My Awesome MCP Server")
 
-    for namespace, rel_path in SERVERS.items():
+    for namespace, module_name in SERVERS.items():
         if only and namespace not in only:
             continue
-        path = REPO_ROOT / rel_path
-        if not path.exists():
-            log(f"[スキップ] {namespace}: ファイルがありません ({path})")
-            continue
         try:
-            module = load_module(namespace, path)
-            sub_server = getattr(module, "mcp")
-            main_server.mount(sub_server, namespace=namespace)
-            log(f"[読み込み] {namespace}: {rel_path}")
+            module = importlib.import_module(module_name)
+            main_server.mount(module.mcp, namespace=namespace)
+            log(f"[読み込み] {namespace}")
         except Exception as e:  # 1つ失敗しても、ほかのサーバーは使えるようにする
             log(f"[エラー] {namespace}: {type(e).__name__}: {e}")
 
@@ -91,7 +82,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--transport", choices=["stdio", "http"], default="stdio",
-        help="通信方式（既定: stdio。Claude Desktop から使うときは stdio）",
+        help="通信方式（既定: stdio。Claude Desktop や Copilot から使うときは stdio）",
     )
     parser.add_argument("--host", default="127.0.0.1", help="HTTPのときの待ち受けアドレス")
     parser.add_argument("--port", type=int, default=8000, help="HTTPのときのポート番号")
@@ -101,6 +92,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    load_env()  # 各サーバーを import する前に読み込む
     server = build_server(args.only)
     log(f"[起動] My Awesome MCP Server（transport={args.transport}）")
 

@@ -67,6 +67,13 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ## インストール方法
 
+> **クローンせずに使いたい場合**：`uvx` を使えば、GitHub の URL を指定するだけで起動できます。
+> ```bash
+> uvx --from git+https://github.com/yourname/my-awesome-mcp-server my-awesome-mcp-server
+> ```
+> 詳しい手順は [Windows 版](docs/uvx-windows.md) ／ [Linux・venv ＋ GitHub Copilot 版](docs/uvx-linux-copilot.md) を参照してください。
+> 以下は、リポジトリをクローンして使う手順です。
+
 ### 1. リポジトリをクローンする
 
 ```bash
@@ -305,9 +312,11 @@ my-awesome-mcp-server/
 ├── chapter08/   # 汎用ツールサーバー（Web 検索・Python 実行）
 ├── chapter09/   # 自作の MCP クライアント（CLI・対話型・OpenAI 連携）
 ├── chapter10/   # MCP エージェント（専用の pyproject.toml あり）
+├── docs/        # uvx での直接実行の手順（Windows 版・Linux＋Copilot 版）
 ├── src/
 │   └── mcp_learning/
-│       └── server.py   # 統合サーバー（my-awesome-mcp-server コマンドの本体）
+│       ├── server.py   # 統合サーバー（my-awesome-mcp-server コマンドの本体）
+│       └── servers/    # 統合サーバーに組み込む4つのサーバー（各章の完成版のコピー）と DB
 ├── pyproject.toml
 ├── uv.lock
 ├── LICENSE
